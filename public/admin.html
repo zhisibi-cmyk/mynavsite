@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理 - 个人导航</title>
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <style>
+        /* --- 全局与背景 --- */
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'PingFang SC', sans-serif; overflow: hidden; }
+        #app { height: 100%; }
+
+        /* 动态背景 */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            filter: brightness(0.6); z-index: -1;
+            transition: background-image 0.8s ease;
+        }
+
+        /* --- 登录页 --- */
+        .login-wrapper { height: 100%; display: flex; justify-content: center; align-items: center; }
+        .login-card {
+            width: 380px; padding: 40px; 
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(20px);
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; color: white;
+        }
+
+        /* --- 后台布局 --- */
+        .admin-layout { height: 100%; }
+        
+        /* 侧边栏 */
+        .glass-aside {
+            background: rgba(0, 0, 0, 0.5) !important;
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo-area {
+            height: 60px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 18px; font-weight: 300; letter-spacing: 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .el-menu { border: none; background: transparent !important; }
+        .el-menu-item { color: rgba(255,255,255,0.7) !important; }
+        .el-menu-item:hover, .el-menu-item.is-active { 
+            background: rgba(255,255,255,0.2) !important; color: white !important; 
+        }
+
+        /* 顶部 Header */
+        .el-header {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* 主内容区 */
+        .el-main { padding: 20px; overflow-y: hidden; display: flex; flex-direction: column; }
+
+        /* --- Tab 样式 --- */
+        .glass-tabs-header {
+            display: flex; align-items: center; gap: 5px; margin-bottom: 10px;
+            overflow-x: auto; padding-bottom: 5px;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .glass-tabs-header::-webkit-scrollbar { display: none; }
+
+        .glass-tab-item {
+            padding: 8px 20px; border-radius: 8px 8px 0 0;
+            color: rgba(255,255,255,0.6); cursor: pointer; white-space: nowrap;
+            transition: all 0.3s; position: relative; font-size: 15px;
+        }
+        .glass-tab-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .glass-tab-item.active {
+            color: #fff; background: rgba(255,255,255,0.2);
+            font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .glass-tab-item.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+            background: #409EFF; box-shadow: 0 0 8px #409EFF;
+        }
+
+        /* 内容面板 */
+        .glass-panel {
+            flex: 1; overflow-y: auto;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px);
+            border-radius: 0 12px 12px 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 25px;
+        }
+        .glass-panel.first-active { border-radius: 12px; }
+
+        /* --- 编辑卡片样式 --- */
+        .edit-card {
+            background: rgba(255,255,255,0.95); border-radius: 8px; padding: 15px;
+            transition: all 0.3s; position: relative; border: 1px solid transparent;
+            margin-bottom: 15px;
+        }
+        /* 排序动画 */
+        .list-move, .list-enter-active, .list-leave-active { transition: all 0.5s ease; }
+        .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(30px); }
+        .list-leave-active { position: absolute; }
+
+        .edit-card:hover { transform: translateY(-3px); background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 5; }
+        .delete-btn { position: absolute; top: 5px; right: 5px; opacity: 0; transition: 0.2s; z-index: 10; }
+        .edit-card:hover .delete-btn { opacity: 1; }
+        
+        .card-row { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .mini-input .el-input__wrapper { padding: 1px 8px; }
+        .mini-input .el-input__inner { font-size: 13px; height: 26px; line-height: 26px; }
+        .sort-input { width: 50px; }
+        .sort-input .el-input__inner { text-align: center; font-weight: bold; color: #409EFF; }
+        .icon-preview { width: 20px; height: 20px; border-radius: 4px; background: #eee; object-fit: cover; }
+
+        /* 分类操作栏 */
+        .cat-actions {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 15px; margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .transparent-input .el-input__wrapper {
+            background-color: rgba(0,0,0,0.2) !important;
+            box-shadow: none !important; border: 1px solid rgba(255,255,255,0.3); color: white;
+        }
+        .transparent-input .el-input__inner { color: white; font-size: 18px; font-weight: bold; }
+        
+        .glass-panel::-webkit-scrollbar { width: 6px; }
+        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="bg-layer" :style="{ backgroundImage: `url(${bgUrl})` }"></div>
+
+        <div v-if="!isLoggedIn" class="login-wrapper">
+            <div class="login-card">
+                <h2 style="margin-bottom: 30px;">Admin Login</h2>
+                <el-input v-model="loginPassword" type="password" placeholder="请输入密码" show-password 
+                    size="large" @keyup.enter="login" style="margin-bottom: 20px;"></el-input>
+                <el-button type="primary" size="large" style="width: 100%;" @click="login" :loading="loading">进入后台</el-button>
+            </div>
+        </div>
+
+        <el-container v-else class="admin-layout">
+            <el-aside width="200px" class="glass-aside">
+                <div class="logo-area">My Nav Admin</div>
+                <el-menu :default-active="activeIndex" @select="handleMenuSelect">
+                    <el-menu-item index="1"><span>📂 内容管理</span></el-menu-item>
+                    <el-menu-item index="2"><span>🔒 安全设置</span></el-menu-item>
+                    <el-menu-item index="3"><span>🚀 返回前台</span></el-menu-item>
+                </el-menu>
+            </el-aside>
+            
+            <el-container>
+                <el-header>
+                    <div style="font-size: 16px;">{{ currentPageTitle }}</div>
+                    <div>
+                        <el-button type="success" round icon="Check" @click="saveData">保存所有修改</el-button>
+                        <el-button type="danger" circle plain icon="SwitchButton" @click="logout" title="退出"></el-button>
+                    </div>
+                </el-header>
+                
+                <el-main>
+                    <div v-if="activeIndex === '1'" style="height: 100%; display: flex; flex-direction: column;">
+                        
+                        <div class="glass-tabs-header">
+                            <div v-for="(cat, index) in categories" :key="index"
+                                :class="['glass-tab-item', { active: currentCatIndex === index }]"
+                                @click="currentCatIndex = index">
+                                {{ cat.name }}
+                            </div>
+                            <el-button type="primary" circle size="small" icon="Plus" 
+                                @click="addCategory" style="margin-left: 10px; flex-shrink: 0; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></el-button>
+                        </div>
+
+                        <div v-if="categories.length > 0" class="glass-panel" :class="{ 'first-active': currentCatIndex === 0 }">
+                            <div class="cat-actions">
+                                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                    <span style="color: white; font-size: 14px; opacity: 0.8;">分类名称：</span>
+                                    <el-input v-model="categories[currentCatIndex].name" class="transparent-input" style="width: 250px;"></el-input>
+                                </div>
+                                <el-popconfirm title="确定要删除分类吗？" @confirm="removeCategory(currentCatIndex)">
+                                    <template #reference><el-button type="danger" plain icon="Delete">删除分类</el-button></template>
+                                </el-popconfirm>
+                            </div>
+
+                            <el-row :gutter="15">
+                                <transition-group name="list">
+                                    <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="4" 
+                                            v-for="(link, lIndex) in categories[currentCatIndex].links" 
+                                            :key="link.tempId || lIndex">
+                                        
+                                        <div class="edit-card">
+                                            <el-button class="delete-btn" type="danger" size="small" circle icon="Delete" @click="removeLink(currentCatIndex, lIndex)"></el-button>
+                                            
+                                            <div class="card-row">
+                                                <el-tooltip content="修改序号后点击空白处，自动排序" placement="top">
+                                                    <el-input v-model.number="link.sort" class="mini-input sort-input" placeholder="No" 
+                                                        @change="sortCurrentLinks" title="序号">
+                                                    </el-input>
+                                                </el-tooltip>
+                                                <img :src="link.icon || getFavicon(link.url)" class="icon-preview" onerror="this.style.backgroundColor='#ccc'">
+                                                <el-input v-model="link.name" placeholder="名称" class="mini-input" style="font-weight: bold; flex: 1;"></el-input>
+                                            </div>
+                                            <div class="card-row">
+                                                <el-input v-model="link.url" placeholder="URL" class="mini-input">
+                                                    <template #prefix>🔗</template>
+                                                </el-input>
+                                            </div>
+                                            <div class="card-row" style="margin-bottom: 0;">
+                                                <el-input v-model="link.icon" placeholder="图标URL (可选)" class="mini-input">
+                                                    <template #prefix>🖼️</template>
+                                                </el-input>
+                                            </div>
+                                        </div>
+                                    </el-col>
+                                </transition-group>
+
+                                <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="4" key="add-btn">
+                                    <div class="edit-card" 
+                                         style="height: 118px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px dashed #ddd; cursor: pointer; background: rgba(255,255,255,0.5);"
+                                         @click="addLink(currentCatIndex)">
+                                        <el-icon :size="30" color="#666"><Plus /></el-icon>
+                                        <span style="margin-top: 5px; color: #666; font-size: 12px;">添加链接 (自动编号)</span>
+                                    </div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                        
+                        <div v-else style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
+                            <p style="font-size: 18px; opacity: 0.8;">还没有任何分类</p>
+                            <el-button type="primary" icon="Plus" @click="addCategory">新建第一个分类</el-button>
+                        </div>
+                    </div>
+
+                    <div v-if="activeIndex === '2'" style="display: flex; justify-content: center; padding-top: 50px;">
+                        <div style="background: rgba(255,255,255,0.2); backdrop-filter: blur(15px); padding: 40px; border-radius: 12px; width: 400px; text-align: center; color: white;">
+                            <h3>修改密码</h3>
+                            <el-input v-model="newPassword" placeholder="新密码" show-password style="margin-bottom: 20px;"></el-input>
+                            <el-button type="primary" @click="changePassword" style="width: 100%;">确认修改</el-button>
+                        </div>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+    </div>
+
+    <script src="//unpkg.com/vue@3"></script>
+    <script src="//unpkg.com/element-plus"></script>
+    <script src="//unpkg.com/element-plus/dist/locale/zh-cn.min.js"></script>
+    <script src="//unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="//unpkg.com/@element-plus/icons-vue"></script>
+
+    <script>
+        const { createApp, ref, onMounted, computed, nextTick } = Vue;
+        const { ElMessage } = ElementPlus;
+
+        const app = createApp({
+            setup() {
+                const bgUrl = ref('');
+                const isLoggedIn = ref(false);
+                const loginPassword = ref('');
+                const categories = ref([]);
+                const loading = ref(false);
+                const activeIndex = ref('1');
+                const newPassword = ref('');
+                const currentCatIndex = ref(0);
+
+                const currentPageTitle = computed(() => {
+                    if (activeIndex.value === '1') return '网站内容管理';
+                    if (activeIndex.value === '2') return '系统安全设置';
+                    return '';
+                });
+
+                const getFavicon = (url) => {
+                    try { return new URL(url).origin + '/favicon.ico'; } catch (e) { return ''; }
+                };
+
+                onMounted(() => {
+                    fetchBing();
+                    if (localStorage.getItem('token')) {
+                        isLoggedIn.value = true;
+                        fetchData();
+                    }
+                });
+
+                const fetchBing = async () => {
+                    try {
+                        // 添加时间戳防止缓存，实现刷新换图
+                        const res = await axios.get('/api/bing?t=' + new Date().getTime());
+                        bgUrl.value = res.data.url;
+                    } catch(e) { bgUrl.value = 'https://bing.biturl.top/?resolution=1920&format=image&index=random&mkt=zh-CN&v=' + Math.random(); }
+                };
+
+                const login = async () => {
+                    if(!loginPassword.value) return;
+                    loading.value = true;
+                    try {
+                        const res = await axios.post('/api/login', { password: loginPassword.value });
+                        localStorage.setItem('token', res.data.token);
+                        isLoggedIn.value = true;
+                        ElMessage.success('登录成功');
+                        fetchData();
+                    } catch (e) { ElMessage.error('密码错误'); } 
+                    finally { loading.value = false; }
+                };
+
+                const logout = () => {
+                    localStorage.removeItem('token');
+                    isLoggedIn.value = false;
+                };
+
+                // --- 核心数据加载逻辑 ---
+                const fetchData = async () => {
+                    try {
+                        const res = await axios.get('/api/data');
+                        const data = res.data.categories || [];
+                        
+                        // 数据清洗：确保有 sort 字段
+                        data.forEach(cat => {
+                            cat.links.forEach((link, idx) => {
+                                link.tempId = Date.now() + Math.random(); // 用于动画的Key
+                                if (link.sort === undefined || link.sort === null) {
+                                    link.sort = idx + 1;
+                                }
+                            });
+                            // 初始排序
+                            cat.links.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+                        });
+                        
+                        categories.value = data;
+                        if(currentCatIndex.value >= categories.value.length) currentCatIndex.value = 0;
+                    } catch(e) { ElMessage.error('数据加载失败'); }
+                };
+
+                // --- 自动排序逻辑 ---
+                const sortCurrentLinks = () => {
+                    nextTick(() => {
+                        const links = categories.value[currentCatIndex.value].links;
+                        links.sort((a, b) => a.sort - b.sort);
+                        ElMessage.info('已自动重新排序');
+                    });
+                };
+
+                const addLink = (cIndex) => {
+                    const links = categories.value[cIndex].links;
+                    // 计算最大编号
+                    let maxSort = 0;
+                    if (links.length > 0) {
+                        maxSort = Math.max(...links.map(l => l.sort || 0));
+                    }
+                    
+                    links.push({ 
+                        name: '', url: '', icon: '', 
+                        sort: maxSort + 1, // 自动编号
+                        tempId: Date.now() 
+                    });
+                    
+                    nextTick(() => {
+                        const panel = document.querySelector('.glass-panel');
+                        if(panel) panel.scrollTop = panel.scrollHeight;
+                    });
+                };
+
+                const saveData = async () => {
+                    // 保存前强制全局排序一次
+                    categories.value.forEach(cat => {
+                        cat.links.sort((a, b) => a.sort - b.sort);
+                    });
+                    
+                    try {
+                        await axios.post('/api/data', { categories: categories.value }, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        ElMessage.success('保存成功！');
+                    } catch(e) { 
+                        if(e.response && e.response.status === 401) logout();
+                        else ElMessage.error('保存失败');
+                    }
+                };
+
+                // --- 基础逻辑 ---
+                const handleMenuSelect = (index) => {
+                    if (index === '3') window.open('/', '_blank');
+                    else activeIndex.value = index;
+                };
+
+                const addCategory = () => {
+                    const newName = '新分类 ' + (categories.value.length + 1);
+                    categories.value.push({ name: newName, links: [] });
+                    currentCatIndex.value = categories.value.length - 1;
+                };
+
+                const removeCategory = (index) => {
+                    categories.value.splice(index, 1);
+                    if (currentCatIndex.value >= categories.value.length) {
+                        currentCatIndex.value = Math.max(0, categories.value.length - 1);
+                    }
+                };
+
+                const removeLink = (cIndex, lIndex) => {
+                    categories.value[cIndex].links.splice(lIndex, 1);
+                };
+
+                const changePassword = async () => {
+                    if(!newPassword.value) return;
+                    try {
+                        await axios.post('/api/change-password', { newPassword: newPassword.value }, {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        ElMessage.success('密码修改成功'); logout();
+                    } catch(e) { ElMessage.error('修改失败'); }
+                };
+
+                return {
+                    bgUrl, isLoggedIn, loginPassword, loading, categories, activeIndex, currentPageTitle, newPassword,
+                    currentCatIndex,
+                    getFavicon, login, logout, saveData, handleMenuSelect,
+                    addCategory, removeCategory, addLink, removeLink, changePassword, sortCurrentLinks
+                };
+            }
+        });
+
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+        app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+        app.mount('#app');
+    </script>
+</body>
+</html>
