@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人导航</title>
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <style>
+        /* 全局重置 */
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; overflow: hidden; }
+        #app { height: 100%; display: flex; flex-direction: column; position: relative; }
+        
+        /* 1. 动态背景层 */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            filter: brightness(0.6); z-index: -1; 
+            transition: background-image 0.8s ease-in-out;
+        }
+
+        /* 2. 布局容器 */
+        .main-container {
+            max-width: 1200px; width: 100%; margin: 0 auto; 
+            padding: 20px 40px; 
+            box-sizing: border-box;
+            display: flex; flex-direction: column; height: 100%;
+        }
+
+        /* 3. 顶部 Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0 30px 0; color: white;
+        }
+        .brand { font-size: 24px; font-weight: 300; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        .admin-link {
+            text-decoration: none; color: rgba(255,255,255,0.6); font-size: 14px;
+            transition: 0.3s; padding: 6px 12px; border-radius: 20px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+        }
+        .admin-link:hover { background: white; color: #333; }
+
+        /* 4. 分类导航栏 (Tabs) */
+        .nav-tabs { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* 修改 Element Plus Tabs 样式适配深色背景 */
+        .custom-tabs .el-tabs__item {
+            color: rgba(255,255,255,0.6) !important;
+            font-size: 16px; font-weight: 500;
+        }
+        .custom-tabs .el-tabs__item.is-active {
+            color: #fff !important;
+            font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .custom-tabs .el-tabs__active-bar { background-color: #fff !important; height: 3px; border-radius: 2px; }
+        .custom-tabs .el-tabs__nav-wrap::after { display: none; }
+
+        /* 5. 链接内容区域 */
+        .content-area {
+            flex: 1; overflow-y: auto; padding-top: 20px;
+            scrollbar-width: none; -ms-overflow-style: none; /* 隐藏滚动条 */
+        }
+        .content-area::-webkit-scrollbar { display: none; }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px);
+            border-radius: 12px; padding: 15px; 
+            display: flex; align-items: center; text-decoration: none; color: #333;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.5);
+        }
+        .link-card:hover {
+            transform: translateY(-5px); 
+            background: white; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .link-icon { width: 32px; height: 32px; margin-right: 15px; border-radius: 6px; object-fit: cover; }
+        .link-info { display: flex; flex-direction: column; overflow: hidden; }
+        .link-name { font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .link-desc { font-size: 12px; color: #666; margin-top: 2px; opacity: 0.7; }
+
+        /* 6. 底部 Footer */
+        .footer {
+            margin-top: auto; padding: 15px 0; text-align: center; color: rgba(255,255,255,0.6);
+            font-size: 12px; letter-spacing: 1px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 动画 */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="bg-layer" :style="{ backgroundImage: `url(${bgUrl})` }"></div>
+
+        <div class="main-container">
+            <div class="header">
+                <div class="brand">My Navigation</div>
+                <!-- <a href="/admin" target="_blank" class="admin-link">管理后台 &rarr;</a> -->
+            </div>
+
+            <div class="nav-tabs" v-if="categories.length > 0">
+                <el-tabs v-model="activeTabName" class="custom-tabs">
+                    <el-tab-pane v-for="(cat, index) in categories" :key="index" :label="cat.name" :name="cat.name">
+                        <div class="content-area">
+                            <transition name="fade" appear>
+                                <el-row :gutter="20">
+                                    <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="(link, lIndex) in cat.links" :key="lIndex">
+                                        <a :href="link.url" target="_blank" class="link-card">
+                                            <img :src="link.icon || getFavicon(link.url)" class="link-icon" onerror="this.src='https://ui-avatars.com/api/?name=L&background=random&color=fff'">
+                                            <div class="link-info">
+                                                <span class="link-name">{{ link.name }}</span>
+                                            </div>
+                                        </a>
+                                    </el-col>
+                                </el-row>
+                            </transition>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+
+            <div v-else style="color: white; text-align: center; margin-top: 150px;">
+                <h2>👋 正在加载或暂无数据</h2>
+                <p>请点击右上角进入后台添加配置</p>
+            </div>
+
+            <div class="footer">
+                &copy; {{ new Date().getFullYear() }} My Personal Space.
+            </div>
+        </div>
+    </div>
+
+    <script src="//unpkg.com/vue@3"></script>
+    <script src="//unpkg.com/element-plus"></script>
+    <script src="//unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        const app = createApp({
+            setup() {
+                const bgUrl = ref('');
+                const categories = ref([]);
+                const activeTabName = ref('');
+
+                // 辅助：尝试获取网站图标
+                const getFavicon = (url) => {
+                    if (!url) return '';
+                    try { return new URL(url).origin + '/favicon.ico'; } catch (e) { return ''; }
+                };
+
+                const fetchData = async () => {
+                    try {
+                        const res = await axios.get('/api/data');
+                        if (res.data && res.data.categories) {
+                            let data = res.data.categories;
+                            // 前台也按照 sort 排序，确保显示一致
+                            data.forEach(cat => {
+                                if(cat.links) cat.links.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+                            });
+                            categories.value = data;
+                            if (categories.value.length > 0) {
+                                activeTabName.value = categories.value[0].name;
+                            }
+                        }
+                    } catch (e) { console.error('数据加载失败', e); }
+                };
+
+                const fetchBing = async () => {
+                    try {
+                        // 添加时间戳 ?t=... 强制刷新，配合后端随机逻辑
+                        const res = await axios.get('/api/bing?t=' + new Date().getTime());
+                        bgUrl.value = res.data.url;
+                    } catch(e) {
+                        // 备用随机图
+                        bgUrl.value = 'https://bing.biturl.top/?resolution=1920&format=image&index=random&mkt=zh-CN&v=' + Math.random();
+                    }
+                };
+
+                onMounted(() => {
+                    fetchData();
+                    fetchBing();
+                });
+
+                return { bgUrl, categories, activeTabName, getFavicon };
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>
