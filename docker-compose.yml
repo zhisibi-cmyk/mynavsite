@@ -1,0 +1,12 @@
+version: '3'
+services:
+  nav-server:
+    build: .
+    container_name: my-personal-nav
+    restart: always
+    ports:
+      - "8080:3000"  # 左边是VPS访问端口，可以改成 80 直接访问
+    volumes:
+      - ./data:/app/data  # 挂载数据卷，防止重启丢失数据
+    environment:
+      - NODE_ENV=production
