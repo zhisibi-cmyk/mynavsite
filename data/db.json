@@ -1,0 +1,100 @@
+{
+  "password": "1234",
+  "categories": [
+    {
+      "id": 1,
+      "name": "常用工具",
+      "links": [
+        {
+          "name": "Google",
+          "url": "https://google.com",
+          "icon": "https://www.google.com/favicon.ico",
+          "tempId": 1764743636295.7407,
+          "sort": 1
+        },
+        {
+          "name": "3",
+          "url": "https://google.com",
+          "icon": "",
+          "tempId": 1764743636295.8135,
+          "sort": 2
+        },
+        {
+          "name": "2",
+          "url": "https://google.com",
+          "icon": "",
+          "tempId": 1764743636295.133,
+          "sort": 3
+        },
+        {
+          "name": "4",
+          "url": "https://google.com",
+          "icon": "",
+          "tempId": 1764743636295.0173,
+          "sort": 4
+        },
+        {
+          "name": "5",
+          "url": "https://google.com",
+          "icon": "",
+          "tempId": 1764743636295.9844,
+          "sort": 5
+        }
+      ]
+    },
+    {
+      "name": "AI",
+      "links": [
+        {
+          "name": "chatgpt",
+          "url": "https://chatgpt.com/",
+          "icon": "",
+          "tempId": 1764743636295.267,
+          "sort": 1
+        },
+        {
+          "name": "chatgpt",
+          "url": "https://chatgpt.com/",
+          "icon": "",
+          "tempId": 1764743636295.4924,
+          "sort": 2
+        },
+        {
+          "name": "chatgpt",
+          "url": "https://chatgpt.com/",
+          "icon": "",
+          "tempId": 1764743636295.4429,
+          "sort": 3
+        }
+      ]
+    },
+    {
+      "name": "TEST",
+      "links": [
+        {
+          "name": "Example",
+          "url": "http://localhost:5173/",
+          "icon": "",
+          "tempId": 1764743636295.3694,
+          "sort": 1
+        }
+      ]
+    },
+    {
+      "name": "test1",
+      "links": []
+    },
+    {
+      "name": "新分类 5",
+      "links": []
+    },
+    {
+      "name": "新分类 6",
+      "links": []
+    },
+    {
+      "name": "新分类 7",
+      "links": []
+    }
+  ]
+}
